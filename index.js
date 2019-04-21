@@ -71,11 +71,7 @@ const observeDOM = (function () {
 
         if (postsContainer && !isInitObserver) {
             observeDOM(postsContainer, () => {
-                if (location.href !== 'https://www.reddit.com/r/pikabu/'
-                    && location.href !== 'https://www.reddit.com/r/Pikabu/'
-                    && location.href !== 'https://www.reddit.com/r/pikabu'
-                    && location.href !== 'https://www.reddit.com/r/Pikabu'
-                ) {
+                if (!location.href.includes('/r/pikabu/') && !location.href.includes('/r/Pikabu/')) {
                     return logger('---> not match pikabu subreddit')
                 };
                 logger('---> match pikabu subreddit');
