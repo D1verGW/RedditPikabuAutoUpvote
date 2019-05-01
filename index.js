@@ -1,11 +1,9 @@
 // ==UserScript==
-// @name         New Userscript
-// @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  try to take over the world!
-// @author       You
+// @name         Hide showed posts
+// @namespace    https://github.com/D1verGW/RedditPikabuAutoUpvote/
+// @version      0.2
+// @author       D1verGW
 // @match        *://www.reddit.com/*
-// @grant        none
 // ==/UserScript==
 
 /*!
@@ -23,6 +21,7 @@ function logger () {
 };
 
 window.enableRedditPikabuScriptLog = false;
+const redditPikabuLocalForageName = 'redditPostsLocalStorage';
 
 const isPostOnTop = function (target, unvisibleCallback) {
     if (!target || !target.nodeType === 1) return console.warn('target is incorrect', target); // validation
@@ -40,17 +39,17 @@ const isPostOnTop = function (target, unvisibleCallback) {
             right: window.pageXOffset + document.documentElement.clientWidth,
             bottom: window.pageYOffset + document.documentElement.clientHeight
         };
-    
+
     // Если позиция нижней части элемента меньше позиции верхней чайти окна, то элемент скрыт верхней частью окна браузера
     return targetPosition.bottom < windowPosition.top;
 };
 
 const observeDOM = (function () {
     var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-    
+
     return function (obj, callback) {
         if (!obj || !obj.nodeType === 1) return console.warn('observable node incorrect', obj); // validation
-        
+
         if (MutationObserver) {
             // define a new observer
             var obs = new MutationObserver(function (mutations, observer) {
@@ -59,7 +58,7 @@ const observeDOM = (function () {
             // have the observer observe foo for changes in children
             obs.observe(obj, { childList: true, subtree: true });
         }
-        
+
         else if (window.addEventListener) {
             obj.addEventListener('DOMNodeInserted', callback, false);
             obj.addEventListener('DOMNodeRemoved', callback, false);
@@ -69,20 +68,22 @@ const observeDOM = (function () {
 
 (function() {
     'use strict';
-    
+
     logger('---> init script');
-    
+
     let isInitObserver = false;
-    
-    localforage.getItem('redditPostsLocalStorage').then((posts) => {
+
+    localforage.getItem(redditPikabuLocalForageName).then((posts) => {
         posts && Object.keys(posts).forEach(postId => {
             posts[postId] += 1;
         });
+
+        localforage.setItem(redditPikabuLocalForageName, posts || {});
     });
-    
+
     observeDOM(document.body, () => {
         const postsContainer = document.querySelector('.rpBJOHq2PR60pnwJlUyP0');
-        
+
         if (postsContainer && !isInitObserver) {
             observeDOM(postsContainer, () => {
                 if (!location.href.toLowerCase().includes('/r/pikabu')) {
@@ -92,18 +93,18 @@ const observeDOM = (function () {
                 isInitObserver = true;
                 (Array.from(postsContainer.children)).forEach(post => {
                     if (!isPostOnTop(post)) return;
-                    localforage.getItem('redditPostsLocalStorage').then((postsLocalStorage) => {
+                    localforage.getItem(redditPikabuLocalForageName).then((postsLocalStorage) => {
                         const postsObject = postsLocalStorage || {};
-                        post.querySelector('.Post') && localforage.setItem('redditPostsLocalStorage', {
+                        post.querySelector('.Post') && localforage.setItem(redditPikabuLocalForageName, {
                             ...postsObject,
                             [post.querySelector('.Post').id]: 0
                         });
                     });
                 });
             });
-            
+
             setInterval(() => {
-                localforage.getItem('redditPostsLocalStorage').then((posts) => {
+                localforage.getItem(redditPikabuLocalForageName).then((posts) => {
                     posts && Object.keys(posts).forEach(postId => {
                         const elem = document.querySelector(`#${postId}`);
                         elem && posts[postId] && elem.parentElement.parentElement.remove();
@@ -117,6 +118,4 @@ const observeDOM = (function () {
             logger('---> not match posts container');
         }
     })
-    
-    // Your code here...
 })();
