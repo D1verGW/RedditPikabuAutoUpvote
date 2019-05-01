@@ -97,7 +97,7 @@ const observeDOM = (function () {
                         const postsObject = postsLocalStorage || {};
                         post.querySelector('.Post') && localforage.setItem(redditPikabuLocalForageName, {
                             ...postsObject,
-                            [post.querySelector('.Post').id]: 0
+                            [post.querySelector('.Post').id]: postsObject[post.querySelector('.Post').id] || 0
                         });
                     });
                 });
